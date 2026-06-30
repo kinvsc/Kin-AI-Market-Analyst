@@ -32,7 +32,10 @@ def analyze(ticker):
     is_crypto = "-USD" in ticker
 
     asset = yf.Ticker(ticker)
-    info = asset.info
+    try:
+        info = asset.info
+    except Exception:
+        info = {}
 
     market_cap = info.get("marketCap", "N/A")
     trailing_pe = info.get("trailingPE", "N/A")
