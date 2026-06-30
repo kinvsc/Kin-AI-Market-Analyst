@@ -1,38 +1,38 @@
 import os
+from urllib.parse import quote_plus
+
 import feedparser
 import yfinance as yf
 import streamlit as st
 from openai import OpenAI
-from urllib.parse import quote_plus
 
 st.set_page_config(
-    page_title="Kin AI Market Analyst",
+    page_title="Kin AI",
     page_icon="🚀",
     layout="centered"
 )
 
-st.title("🚀 Kin AI Market Analyst")
-st.caption("股票 / Crypto AI 分析工具")
+st.title("🚀 Kin AI")
+st.caption("AI Market Analyst v3")
 
 try:
     api_key = st.secrets["OPENAI_API_KEY"]
-except:
+except Exception:
     api_key = os.getenv("OPENAI_API_KEY")
 
-if not api_key:
-    api_key = st.text_input("輸入 OpenAI API Key", type="password")
-
-client = OpenAI(api_key=api_key) if api_key else None
+client = OpenAI(api_key=api_key)
 
 ticker = st.text_input(
     "輸入股票 / Crypto Ticker",
     placeholder="例如：NVDA, META, BTC-USD, ETH-USD"
 ).upper().strip()
 
+
 def analyze(ticker):
     is_crypto = "-USD" in ticker
 
     asset = yf.Ticker(ticker)
+
     try:
         info = asset.info
     except Exception:
@@ -43,10 +43,6 @@ def analyze(ticker):
     forward_pe = info.get("forwardPE", "N/A")
     revenue_growth = info.get("revenueGrowth", "N/A")
     earnings_growth = info.get("earningsGrowth", "N/A")
-
-    # =====================
-    # 多來源新聞搜尋
-    # =====================
 
     news_queries = [
         f"{ticker} Reuters stock news",
@@ -76,18 +72,94 @@ def analyze(ticker):
             if len(titles) >= 10:
                 break
 
-            if len(titles) >= 10:
-                break
-        news_text = "\n".join(titles)
+        if len(titles) >= 10:
+            break
 
-        if is_crypto:
-                prompt = f"""
-你是一名進取型加密貨幣市場研究員，專注短線至一星期內的市場機會。
+    news_text = "\n".join(titles)
+
+    if is_crypto:
+        prompt = f"""
+你是一名進取型加密貨幣市場研究員，專注短線至下一交易日/未來一星期的市場機會。
 
 請根據以下資料分析 {ticker}。
 
 【市場資料】
 市值: {market_cap}
+
+【最新新聞】
+以下新聞來自 Google News 搜尋結果，包含 Reuters、CNBC、MarketWatch、Yahoo Finance、財報、官方消息等方向。
+
+{news_text}
+
+分析時請注意：
+- Reuters、官方消息、財報相關消息可信度最高
+- CNBC、MarketWatch、Yahoo Finance 屬於一般市場新聞
+- Motley Fool、個人評論類來源只作輔助參考
+- 不要只根據單一標題下結論
+
+請用廣東話回答，格式如下：
+
+1. 市場現況
+
+2. 利好因素
+
+3. 利淡因素
+
+4. 未來一星期方向
+請使用：
+★★★★★ 非常看好
+★★★★☆ 偏向看好
+★★★☆☆ 中性
+★★☆☆☆ 偏向看淡
+★☆☆☆☆ 高風險
+
+5. AI信心評級
+請使用五星制
+
+6. 主要催化劑
+
+7. 最大風險
+
+8. 下一交易日升跌機率估算
+請用以下格式：
+- 上升機率：__%
+- 下跌機率：__%
+- 震盪機率：__%
+
+9. 預估升跌幅範圍
+請用以下格式：
+- 上升情境：+__% 至 +__%
+- 下跌情境：-__% 至 -__%
+- 最可能區間：__% 至 __%
+
+10. 機率判斷理由
+最多3點
+
+11. 結論
+請使用五星制
+
+要求：
+- 不要用股票財報邏輯分析 Crypto
+- 重點分析市場情緒、ETF資金流、監管消息、鏈上採用、宏觀利率環境
+- 分析可以進取，但必須講清楚原因
+- 不要保證價格一定上升或下跌
+- 不要使用「必買」「必賣」「保證賺錢」
+- 所有機率都只是根據目前公開資訊的主觀估算
+- 每項最多3點
+- 總長度控制在450字內
+"""
+    else:
+        prompt = f"""
+你是一名進取型股票研究員，專注短線至下一交易日/未來一星期的市場機會。
+
+請根據以下資料分析 {ticker}。
+
+【公司基本面】
+市值: {market_cap}
+Trailing PE: {trailing_pe}
+Forward PE: {forward_pe}
+Revenue Growth: {revenue_growth}
+Earnings Growth: {earnings_growth}
 
 【最新新聞】
 以下新聞來自 Google News 搜尋結果，包含 Reuters、CNBC、MarketWatch、Yahoo Finance、財報、Investor Relations 等方向。
@@ -102,76 +174,52 @@ def analyze(ticker):
 
 請用廣東話回答，格式如下：
 
-1. 市場現況
-2. 利好因素
-3. 利淡因素
-4. 未來一星期方向
-   請使用：
-   ★★★★★ 非常看好
-   ★★★★☆ 偏向看好
-   ★★★☆☆ 中性
-   ★★☆☆☆ 偏向看淡
-   ★☆☆☆☆ 高風險
-
-5. AI信心評級
-   請使用五星制
-
-6. 主要催化劑
-7. 最大風險
-8. 結論
-   請使用五星制
-
-要求：
-- 不要用股票財報邏輯分析Crypto
-- 重點分析市場情緒、ETF資金流、監管消息、鏈上採用、宏觀利率環境
-- 不要保證價格一定上升或下跌
-- 不要使用「必買」「必賣」「保證賺錢」
-- 每項最多3點
-- 總長度控制在300字內
-"""
-    else:
-        prompt = f"""
-你是一名進取型股票研究員，專注短線至一星期內的市場機會。
-
-請根據以下資料分析 {ticker}。
-
-【公司基本面】
-市值: {market_cap}
-Trailing PE: {trailing_pe}
-Forward PE: {forward_pe}
-Revenue Growth: {revenue_growth}
-Earnings Growth: {earnings_growth}
-
-【最新新聞】
-{news_text}
-
-請用廣東話回答，格式如下：
-
 1. 公司現況
+
 2. 利好因素
+
 3. 利淡因素
+
 4. 未來一星期方向
-   請使用：
-   ★★★★★ 非常看好
-   ★★★★☆ 偏向看好
-   ★★★☆☆ 中性
-   ★★☆☆☆ 偏向看淡
-   ★☆☆☆☆ 高風險
+請使用：
+★★★★★ 非常看好
+★★★★☆ 偏向看好
+★★★☆☆ 中性
+★★☆☆☆ 偏向看淡
+★☆☆☆☆ 高風險
 
 5. AI信心評級
-   請使用五星制
+請使用五星制
 
 6. 主要催化劑
+
 7. 最大風險
-8. 結論
-   請使用五星制
+
+8. 下一交易日升跌機率估算
+請用以下格式：
+- 上升機率：__%
+- 下跌機率：__%
+- 震盪機率：__%
+
+9. 預估升跌幅範圍
+請用以下格式：
+- 上升情境：+__% 至 +__%
+- 下跌情境：-__% 至 -__%
+- 最可能區間：__% 至 __%
+
+10. 機率判斷理由
+最多3點
+
+11. 結論
+請使用五星制
 
 要求：
 - 分析可以進取，但必須講清楚原因
 - 不要保證股價一定上升或下跌
 - 不要使用「必買」「必賣」「保證賺錢」
+- 所有機率都只是根據目前公開資訊的主觀估算
 - 每項最多3點
-- 總長度控制在300字內
+- 總長度控制在450字內
 - 像專業股票研究員撰寫
 """
 
@@ -182,10 +230,9 @@ Earnings Growth: {earnings_growth}
 
     return titles, response.output_text, response.usage
 
+
 if st.button("🚀 開始分析"):
-    if not api_key:
-        st.error("請先輸入 API Key")
-    elif ticker == "":
+    if ticker == "":
         st.warning("請輸入 ticker，例如 NVDA 或 BTC-USD")
     else:
         with st.spinner(f"AI 正在分析 {ticker}..."):
