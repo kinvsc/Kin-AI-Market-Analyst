@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 st.title("🚀 Kin AI")
-st.caption("AI Market Analyst v3")
+st.caption("AI Market Analyst v3.1 - Watchlist")
 
 try:
     api_key = st.secrets["OPENAI_API_KEY"]
@@ -22,28 +22,18 @@ except Exception:
 
 client = OpenAI(api_key=api_key)
 
-ticker = st.text_input(
-    "輸入股票 / Crypto Ticker",
-    placeholder="例如：NVDA, META, BTC-USD, ETH-USD"
-).upper().strip()
+# =====================
+# Watchlist session state
+# =====================
 
+if "watchlist" not in st.session_state:
+    st.session_state.watchlist = ["NVDA", "META", "TSM", "BTC-USD"]
 
-def analyze(ticker):
-    is_crypto = "-USD" in ticker
+# =====================
+# Functions
+# =====================
 
-    asset = yf.Ticker(ticker)
-
-    try:
-        info = asset.info
-    except Exception:
-        info = {}
-
-    market_cap = info.get("marketCap", "N/A")
-    trailing_pe = info.get("trailingPE", "N/A")
-    forward_pe = info.get("forwardPE", "N/A")
-    revenue_growth = info.get("revenueGrowth", "N/A")
-    earnings_growth = info.get("earningsGrowth", "N/A")
-
+def get_news(ticker):
     news_queries = [
         f"{ticker} Reuters stock news",
         f"{ticker} CNBC stock news",
@@ -75,6 +65,26 @@ def analyze(ticker):
         if len(titles) >= 10:
             break
 
+    return titles
+
+
+def analyze(ticker):
+    is_crypto = "-USD" in ticker
+
+    asset = yf.Ticker(ticker)
+
+    try:
+        info = asset.info
+    except Exception:
+        info = {}
+
+    market_cap = info.get("marketCap", "N/A")
+    trailing_pe = info.get("trailingPE", "N/A")
+    forward_pe = info.get("forwardPE", "N/A")
+    revenue_growth = info.get("revenueGrowth", "N/A")
+    earnings_growth = info.get("earningsGrowth", "N/A")
+
+    titles = get_news(ticker)
     news_text = "\n".join(titles)
 
     if is_crypto:
@@ -87,26 +97,22 @@ def analyze(ticker):
 市值: {market_cap}
 
 【最新新聞】
-以下新聞來自 Google News 搜尋結果，包含 Reuters、CNBC、MarketWatch、Yahoo Finance、財報、官方消息等方向。
+以下新聞來自 Google News 搜尋結果，包含 Reuters、CNBC、MarketWatch、Yahoo Finance、官方消息等方向。
 
 {news_text}
 
 分析時請注意：
 - Reuters、官方消息、財報相關消息可信度最高
 - CNBC、MarketWatch、Yahoo Finance 屬於一般市場新聞
-- Motley Fool、個人評論類來源只作輔助參考
 - 不要只根據單一標題下結論
 
 請用廣東話回答，格式如下：
 
 1. 市場現況
-
 2. 利好因素
-
 3. 利淡因素
-
 4. 未來一星期方向
-請使用：
+請使用五星制：
 ★★★★★ 非常看好
 ★★★★☆ 偏向看好
 ★★★☆☆ 中性
@@ -114,20 +120,15 @@ def analyze(ticker):
 ★☆☆☆☆ 高風險
 
 5. AI信心評級
-請使用五星制
-
 6. 主要催化劑
-
 7. 最大風險
 
 8. 下一交易日升跌機率估算
-請用以下格式：
 - 上升機率：__%
 - 下跌機率：__%
 - 震盪機率：__%
 
 9. 預估升跌幅範圍
-請用以下格式：
 - 上升情境：+__% 至 +__%
 - 下跌情境：-__% 至 -__%
 - 最可能區間：__% 至 __%
@@ -140,8 +141,6 @@ def analyze(ticker):
 
 要求：
 - 不要用股票財報邏輯分析 Crypto
-- 重點分析市場情緒、ETF資金流、監管消息、鏈上採用、宏觀利率環境
-- 分析可以進取，但必須講清楚原因
 - 不要保證價格一定上升或下跌
 - 不要使用「必買」「必賣」「保證賺錢」
 - 所有機率都只是根據目前公開資訊的主觀估算
@@ -169,19 +168,15 @@ Earnings Growth: {earnings_growth}
 分析時請注意：
 - Reuters、公司官方 Investor Relations、財報相關消息可信度最高
 - CNBC、MarketWatch、Yahoo Finance 屬於一般市場新聞
-- Motley Fool、個人評論類來源只作輔助參考
 - 不要只根據單一標題下結論
 
 請用廣東話回答，格式如下：
 
 1. 公司現況
-
 2. 利好因素
-
 3. 利淡因素
-
 4. 未來一星期方向
-請使用：
+請使用五星制：
 ★★★★★ 非常看好
 ★★★★☆ 偏向看好
 ★★★☆☆ 中性
@@ -189,20 +184,15 @@ Earnings Growth: {earnings_growth}
 ★☆☆☆☆ 高風險
 
 5. AI信心評級
-請使用五星制
-
 6. 主要催化劑
-
 7. 最大風險
 
 8. 下一交易日升跌機率估算
-請用以下格式：
 - 上升機率：__%
 - 下跌機率：__%
 - 震盪機率：__%
 
 9. 預估升跌幅範圍
-請用以下格式：
 - 上升情境：+__% 至 +__%
 - 下跌情境：-__% 至 -__%
 - 最可能區間：__% 至 __%
@@ -231,7 +221,60 @@ Earnings Growth: {earnings_growth}
     return titles, response.output_text, response.usage
 
 
-if st.button("🚀 開始分析"):
+# =====================
+# Watchlist UI
+# =====================
+
+st.subheader("⭐ 我的 Watchlist")
+
+new_ticker = st.text_input(
+    "新增 Ticker",
+    placeholder="例如：NVDA 或 BTC-USD"
+).upper().strip()
+
+col1, col2 = st.columns(2)
+
+with col1:
+    if st.button("➕ 加入 Watchlist"):
+        if new_ticker and new_ticker not in st.session_state.watchlist:
+            st.session_state.watchlist.append(new_ticker)
+            st.success(f"已加入 {new_ticker}")
+
+with col2:
+    if st.button("🧹 清空 Watchlist"):
+        st.session_state.watchlist = []
+        st.warning("Watchlist 已清空")
+
+if st.session_state.watchlist:
+    remove_ticker = st.selectbox(
+        "刪除 Ticker",
+        st.session_state.watchlist
+    )
+
+    if st.button("❌ 刪除選中 Ticker"):
+        st.session_state.watchlist.remove(remove_ticker)
+        st.success(f"已刪除 {remove_ticker}")
+
+    st.write("目前 Watchlist：")
+    st.write(", ".join(st.session_state.watchlist))
+else:
+    st.info("Watchlist 目前是空的。")
+
+st.divider()
+
+# =====================
+# Single Analysis
+# =====================
+
+st.subheader("🔍 單隻分析")
+
+ticker = st.text_input(
+    "輸入股票 / Crypto Ticker",
+    placeholder="例如：NVDA, META, BTC-USD, ETH-USD",
+    key="single_ticker"
+).upper().strip()
+
+if st.button("🚀 分析單隻"):
     if ticker == "":
         st.warning("請輸入 ticker，例如 NVDA 或 BTC-USD")
     else:
@@ -253,3 +296,33 @@ if st.button("🚀 開始分析"):
             f"Token Usage — Input: {usage.input_tokens} | "
             f"Output: {usage.output_tokens} | Total: {usage.total_tokens}"
         )
+
+st.divider()
+
+# =====================
+# Watchlist Analysis
+# =====================
+
+st.subheader("📊 一鍵分析 Watchlist")
+
+if st.button("🚀 分析整個 Watchlist"):
+    if not st.session_state.watchlist:
+        st.warning("Watchlist 是空的，請先加入 ticker。")
+    else:
+        for ticker in st.session_state.watchlist:
+            with st.spinner(f"AI 正在分析 {ticker}..."):
+                titles, result, usage = analyze(ticker)
+
+            st.markdown(f"## 📌 {ticker}")
+            st.markdown(result)
+
+            with st.expander(f"{ticker} 最新新聞"):
+                for title in titles:
+                    st.write("•", title)
+
+            st.caption(
+                f"Token Usage — Input: {usage.input_tokens} | "
+                f"Output: {usage.output_tokens} | Total: {usage.total_tokens}"
+            )
+
+            st.divider()
