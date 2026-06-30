@@ -63,7 +63,7 @@ def analyze(ticker):
 
     for query in news_queries:
         safe_query = quote_plus(query)
-        url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
+        url = f"https://news.google.com/rss/search?q={safe_query}&hl=en-US&gl=US&ceid=US:en"
         feed = feedparser.parse(url)
 
         for article in feed.entries[:2]:
