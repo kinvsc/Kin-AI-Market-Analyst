@@ -3,6 +3,7 @@ import feedparser
 import yfinance as yf
 import streamlit as st
 from openai import OpenAI
+from urllib.parse import quote_plus
 
 st.set_page_config(
     page_title="Kin AI Market Analyst",
@@ -61,6 +62,7 @@ def analyze(ticker):
     seen_titles = set()
 
     for query in news_queries:
+        safe_query = quote_plus(query)
         url = f"https://news.google.com/rss/search?q={query}&hl=en-US&gl=US&ceid=US:en"
         feed = feedparser.parse(url)
 
