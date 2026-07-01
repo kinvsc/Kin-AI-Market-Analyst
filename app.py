@@ -470,6 +470,7 @@ if st.button("🚀 開始決策"):
                     entry_price = None
                     
                 save_memory(
+                    ticker=ticker_symbol,
                     memory_type="Stock Analysis",
                     source="Kin AI Decision Engine",
                     score=item.get("ai_score", 0),
