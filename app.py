@@ -5,6 +5,7 @@ import feedparser
 import yfinance as yf
 import streamlit as st
 from openai import OpenAI
+from memory import save_memory
 
 
 LOG_FILE = "security_log.txt"
@@ -42,7 +43,18 @@ st.set_page_config(page_title="Kin AI", page_icon="🚀", layout="centered")
 check_password()
 
 st.title("🚀 Kin AI")
-st.caption("Decision Engine v4.3 Security")
+st.caption("Decision Engine v4.4 Memory")
+
+if st.button("🧠 Test Memory"):
+    save_memory(
+        ticker="TEST",
+        memory_type="System",
+        source="Kin AI",
+        score=100,
+        summary="Google Sheet memory test successful",
+        version="v4.4"
+    )
+    st.success("Memory saved!")
 
 try:
     api_key = st.secrets["OPENAI_API_KEY"]

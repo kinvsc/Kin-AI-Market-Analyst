@@ -4,3 +4,5 @@ yfinance
 feedparser
 requests
 pandas
+gspread
+google-auth
