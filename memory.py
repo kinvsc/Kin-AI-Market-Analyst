@@ -19,10 +19,10 @@ def get_sheet():
     )
     client = gspread.authorize(creds)
 
-    sheet = client.open_by_url(
-        "https://docs.google.com/spreadsheets/d/14mnieuDpeoMGf693uCLzR8e7oK1nsalbQS-GINBCOYQ/edit"
-    ).worksheet(WORKSHEET_NAME)
+    st.write("Using email:", st.secrets["GOOGLE_SERVICE_ACCOUNT"]["client_email"])
+    st.write("Opening sheet id:", SHEET_ID)
 
+    sheet = client.open_by_key(SHEET_ID).sheet1
     return sheet
 
 def make_hash(ticker, summary):
