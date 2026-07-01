@@ -4,7 +4,7 @@ import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
 
-SHEET_NAME = "14mnieuDpeoMGf693uCLzR8e7oK1nsalbQS-GINBCOYo"
+SHEET_ID = "14mnieuDpeoMGf693uCLzR8e7oK1nsalbQS-GINBCOYo"
 WORKSHEET_NAME = "Sheet1"
 
 SCOPES = [
