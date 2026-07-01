@@ -5,6 +5,26 @@ import yfinance as yf
 import streamlit as st
 from openai import OpenAI
 
+
+def check_password():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        password = st.text_input("Password", type="password")
+
+        if password == st.secrets["APP_PASSWORD"]:
+            st.session_state.authenticated = True
+            st.rerun()
+        elif password:
+            st.error("Wrong password")
+            st.stop()
+        else:
+            st.stop()
+
+check_password()
+
+
 st.set_page_config(page_title="Kin AI", page_icon="🚀", layout="centered")
 st.title("🚀 Kin AI")
 st.caption("Decision Engine v4.2")
