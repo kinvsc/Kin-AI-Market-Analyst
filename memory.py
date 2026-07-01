@@ -3,13 +3,11 @@ import hashlib
 import requests
 import streamlit as st
 
-
 def make_hash(ticker, summary):
     raw = f"{ticker}-{summary}"
     return hashlib.md5(raw.encode("utf-8")).hexdigest()
 
-def save_memory(ticker, memory_type, source, score, summary, version="v4.4"):
-
+def save_memory(ticker, memory_type, source, score, summary, version="v4.4", entry_price=None):
     memory_hash = make_hash(ticker, summary)
 
     payload = {
@@ -20,7 +18,8 @@ def save_memory(ticker, memory_type, source, score, summary, version="v4.4"):
         "score": score,
         "summary": summary,
         "hash": memory_hash,
-        "version": version
+        "version": version,
+        "entry_price": entry_price
     }
 
     requests.post(

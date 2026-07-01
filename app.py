@@ -5,7 +5,7 @@ import feedparser
 import yfinance as yf
 import streamlit as st
 from openai import OpenAI
-from Kin_AI.memory import save_memory
+from memory import save_memory
 
 
 LOG_FILE = "security_log.txt"
@@ -457,7 +457,33 @@ if st.button("🚀 開始決策"):
             st.divider()
 
             items = parsed.get("items", [])
-            st.write(items)
+            for item in items:
+                ticker_symbol = item.get("ticker", "N/A")
+
+                entry_price = None
+                try:
+                    stock = yf.Ticker(ticker_symbol)
+                    hist = stock.history(period="1d")
+                    if not hist.empty:
+                        entry_price = round(float(hist["Close"].iloc[-1]), 2)
+                except Exception:
+                    entry_price = None
+                    
+                save_memory(
+                    memory_type="Stock Analysis",
+                    source="Kin AI Decision Engine",
+                    score=item.get("ai_score", 0),
+                    summary=(
+                        f"Action: {item.get('action', 'N/A')} | "
+                        f"Success: {item.get('success_probability', 'N/A')}% | "
+                        f"Risk: {item.get('risk_probability', 'N/A')}% | "
+                        f"Expected Move: {item.get('expected_move', 'N/A')} | "
+                        f"Confidence: {item.get('confidence', 'N/A')} | "
+                        f"Reason: {item.get('reason', 'N/A')}"
+                    ),
+                    version="v4.5",
+                    entry_price=entry_price
+                )
 
             try:
                 items = sorted(items, key=lambda x: int(x.get("ai_score", 0)), reverse=True)
