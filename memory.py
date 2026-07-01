@@ -4,8 +4,8 @@ import gspread
 import streamlit as st
 from google.oauth2.service_account import Credentials
 
-SHEET_NAME = "Kin AI Memory"
-WORKSHEET_NAME = "Memory"
+SHEET_NAME = "14mnieuDpeoMGf693uCLzR8e7oK1nsalbQS-GINBCOYo"
+WORKSHEET_NAME = "Sheet1"
 
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -18,7 +18,7 @@ def get_sheet():
         scopes=SCOPES
     )
     client = gspread.authorize(creds)
-    sheet = client.open(SHEET_NAME).worksheet(WORKSHEET_NAME)
+    sheet = client.open_by_key(SHEET_ID).worksheet(WORKSHEET_NAME)
     return sheet
 
 def make_hash(ticker, summary):
