@@ -1,9 +1,19 @@
 import os, re, json
+from datetime import datetime
 from urllib.parse import quote_plus
 import feedparser
 import yfinance as yf
 import streamlit as st
 from openai import OpenAI
+
+
+LOG_FILE = "security_log.txt"
+
+def write_security_log(event):
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    with open(LOG_FILE, "a", encoding="utf-8") as f:
+        f.write(f"{now} - {event}\n")
 
 
 def check_password():
@@ -15,19 +25,24 @@ def check_password():
 
         if password == st.secrets["APP_PASSWORD"]:
             st.session_state.authenticated = True
+            write_security_log("Login Success")
             st.rerun()
+
         elif password:
+            write_security_log("Wrong Password")
             st.error("Wrong password")
             st.stop()
+
         else:
             st.stop()
 
-check_password()
-
 
 st.set_page_config(page_title="Kin AI", page_icon="🚀", layout="centered")
+
+check_password()
+
 st.title("🚀 Kin AI")
-st.caption("Decision Engine v4.2")
+st.caption("Decision Engine v4.3 Security")
 
 try:
     api_key = st.secrets["OPENAI_API_KEY"]
