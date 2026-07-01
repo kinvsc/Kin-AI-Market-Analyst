@@ -5,7 +5,7 @@ import feedparser
 import yfinance as yf
 import streamlit as st
 from openai import OpenAI
-from memory import save_memory
+from Kin_AI.memory import save_memory
 
 
 LOG_FILE = "security_log.txt"
@@ -457,6 +457,7 @@ if st.button("🚀 開始決策"):
             st.divider()
 
             items = parsed.get("items", [])
+            st.write(items)
 
             try:
                 items = sorted(items, key=lambda x: int(x.get("ai_score", 0)), reverse=True)
