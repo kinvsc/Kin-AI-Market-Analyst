@@ -18,7 +18,11 @@ def get_sheet():
         scopes=SCOPES
     )
     client = gspread.authorize(creds)
-    sheet = client.open_by_key(SHEET_ID).worksheet(WORKSHEET_NAME)
+
+    sheet = client.open_by_url(
+        "https://docs.google.com/spreadsheets/d/14mnieuDpeoMGf693uCLzR8e7oK1nsalbQS-GINBCOYQ/edit"
+    ).worksheet(WORKSHEET_NAME)
+
     return sheet
 
 def make_hash(ticker, summary):
